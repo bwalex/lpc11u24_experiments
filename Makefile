@@ -1,5 +1,5 @@
 CC=arm-none-eabi-gcc
-LD=arm-none-eabi-gcc
+LD=arm-none-eabi-g++
 CXX=arm-none-eabi-g++
 RM=rm -f
 OBJCOPY=arm-none-eabi-objcopy
@@ -22,8 +22,11 @@ CFLAGS+=-ffunction-sections -fdata-sections
 CFLAGS+=-I$(ADAFRUIT_GFX)
 #CFLAGS+=-I$(ADAFRUIT_ILI9325)
 CFLAGS+=-I$(ADAFRUIT_ILI9341)
+CFLAGS+=-static
 
 CXXFLAGS=$(CFLAGS)
+CXXFLAGS+=-fno-rtti -fno-exceptions
+LDFLAGS+=-fno-rtti -fno-exceptions
 
 LDFLAGS+=$(CFLAGS)
 LDFLAGS+=-specs=nano.specs -specs=nosys.specs -T linker_script.ld
@@ -43,13 +46,15 @@ OBJS+=$(CHIPLIB)/src/sysctl_11xx.o	\
 CXXOBJS=$(ADAFRUIT_GFX)/Adafruit_GFX.o
 #CXXOBJS+=$(ADAFRUIT_ILI9325)/Adafruit_TFTLCD.o
 CXXOBJS+=$(ADAFRUIT_ILI9341)/Adafruit_ILI9341.o
-CXXOBJS=
 
 seeeduino_arch_test.bin: test.axf
 	$(OBJCOPY) -O binary test.axf seeeduino_arch_test.bin
 
 test.axf: $(OBJS) $(CXXOBJS)
 	$(LD) $(LDFLAGS) -o test.axf $(OBJS) $(CXXOBJS)
+
+src/cr_startup_lpc11uxx.o: src/cr_startup_lpc11uxx.c
+	$(CXX) $(CXXFLAGS) -o src/cr_startup_lpc11uxx.o -c src/cr_startup_lpc11uxx.c
 
 #$(SIZE) test.axf
 

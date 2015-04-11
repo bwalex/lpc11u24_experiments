@@ -45,13 +45,13 @@ volatile bool ledOn = false;
 void
 spi1_setup(void)
 {
-        Chip_IOCON_PinMuxSet(LPC_IOCON, 1, 20, (IOCON_FUNC2 | IOCON_MODE_PULLUP));      /* SCK0 */
-        Chip_IOCON_PinMuxSet(LPC_IOCON, 1, 21, (IOCON_FUNC2 | IOCON_MODE_PULLUP));      /* MISO0 */
-        Chip_IOCON_PinMuxSet(LPC_IOCON, 1, 22, (IOCON_FUNC2 | IOCON_MODE_PULLUP));      /* MOSI0 */
+        Chip_IOCON_PinMuxSet(LPC_IOCON, 1, 20, (IOCON_FUNC2 | IOCON_MODE_PULLDOWN));      /* SCK0 */
+        Chip_IOCON_PinMuxSet(LPC_IOCON, 1, 21, (IOCON_FUNC2 | IOCON_MODE_INACT));      /* MISO0 */
+        Chip_IOCON_PinMuxSet(LPC_IOCON, 1, 22, (IOCON_FUNC2 | IOCON_MODE_INACT));      /* MOSI0 */
 
 	Chip_SSP_Init(LPC_SSP1);
 
-	Chip_SSP_SetClockRate(LPC_SSP1, 0, 10);
+	Chip_SSP_SetClockRate(LPC_SSP1, 0, 100);
 
 	Chip_SSP_SetFormat(LPC_SSP1, SSP_BITS_8, SSP_FRAMEFORMAT_SPI, SSP_CLOCK_CPHA0_CPOL0);
 
@@ -665,9 +665,11 @@ int main(void) {
 	Chip_GPIO_SetPinState(LPC_GPIO, 1, 11, ledOn);
 
 
-	//Chip_GPIO_SetPinDIROutput(LPC_GPIO, 0, 17); // ILI9341 RESET
-	//Chip_GPIO_SetPinDIROutput(LPC_GPIO, 0, 18); // ILI9341 CS
-	//Chip_GPIO_SetPinDIROutput(LPC_GPIO, 0, 19); // ILI9341 CD
+	Chip_GPIO_SetPinDIROutput(LPC_GPIO, 0, 17); // ILI9341 RESET
+	Chip_GPIO_SetPinDIROutput(LPC_GPIO, 0, 18); // ILI9341 CS
+	Chip_GPIO_SetPinDIROutput(LPC_GPIO, 0, 19); // ILI9341 CD
+
+	Chip_GPIO_SetPinState(LPC_GPIO, 0, 18, 1); // ILI9341 CS
 
 	spi1_setup();
 
@@ -677,12 +679,15 @@ int main(void) {
 	//spi1_write8(0xBB);
 	//spi1_write8(0xCC);
 	//spi1_write8(0xDD);
-	//testILI9341();
-	//
+	testILI9341();
+
 	while (1) {
-		spi1_write8(0xaa);
-		Chip_GPIO_SetPinState(LPC_GPIO, 1, 11, ledOn);
-		ledOn = !ledOn;
+		__WFI();
+
+		//continue;
+		//spi1_write8(0xaa);
+		//Chip_GPIO_SetPinState(LPC_GPIO, 1, 11, ledOn);
+		//ledOn = !ledOn;
 	}
 
 

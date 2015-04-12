@@ -75,6 +75,21 @@ spi1_write8(uint8_t wr_data)
 
 	return rd_data;
 }
+
+void
+spi1_enqueue8(uint8_t wr_data)
+{
+	while (IP_SSP_GetStatus(LPC_SSP1, SSP_STAT_TNF) != SET)
+		;
+
+	IP_SSP_SendFrame(pSSP, wr_data);
+}
+
+void
+spi1_wait(void) {
+	while (IP_SSP_GetStatus(LPC_SSP1, SSP_STAT_TFE) != SET)
+		;
+}
 #endif
 
 /*****************************************************************************

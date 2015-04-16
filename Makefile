@@ -15,6 +15,7 @@ CFLAGS+=-mcpu=cortex-m0 -mthumb -mfloat-abi=soft
 CFLAGS+=-Wall
 #CFLAGS+=-specs=nano.specs -specs=nosys.specs
 CFLAGS+=-Iinc
+CFLAGS+=-I.
 CFLAGS+=-I$(CHIPLIB)/inc
 CFLAGS+=-D__USE_LPCOPEN -DNO_BOARD_LIB -DCORE_M0 -D__NEWLIB__
 CFLAGS+=-Os -flto -g3
@@ -36,6 +37,7 @@ LDFLAGS+=-Wl,--gc-sections -static
 
 
 OBJS=src/crp.o src/cr_startup_lpc11uxx.o  src/seeeduino_arch_test.o  src/sysinit.o
+OBJS+=spi.o
 OBJS+=$(CHIPLIB)/src/sysctl_11xx.o	\
       $(CHIPLIB)/src/iocon_11xx.o 	\
       $(CHIPLIB)/src/ssp_11xx.o		\

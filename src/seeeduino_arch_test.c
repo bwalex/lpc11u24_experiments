@@ -36,6 +36,7 @@ volatile bool ledOn = false;
 #include <errno.h>
 #include <stdio.h>
 #include <unistd.h>
+#include "spi.h"
 
 /*****************************************************************************
  * Private types/enumerations/variables

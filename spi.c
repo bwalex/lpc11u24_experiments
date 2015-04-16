@@ -1,7 +1,9 @@
-#include "spi.h"
 #include "chip.h"
+#include "spi.h"
 
-LPC_SSP_T spi_dev_map[] = {
+#define max(a,b) (((a) > (b)) ? (a) : (b))
+
+LPC_SSP_T *spi_dev_map[] = {
 	[SPI0] = LPC_SSP0,
 	[SPI1] = LPC_SSP1
 };
@@ -10,6 +12,8 @@ int
 spi_init(spi_id_t spi_dev_id)
 {
 	Chip_SSP_Init(spi_dev_map[spi_dev_id]);
+
+	return 0;
 }
 
 int
@@ -20,7 +24,7 @@ spi_open(spi_desc_t *desc, spi_id_t spi_dev_id, spi_clock_t clock_pol,
 		return -1;
 
 	desc->spi_dev_id = spi_dev_id;
-	desc->max_clock_khz = max_clock_hz;
+	desc->max_clock_khz = max_clock_khz;
 	desc->clock_pol = clock_pol;
 	desc->spi_dev = spi_dev_map[spi_dev_id];
 
@@ -36,21 +40,21 @@ spi_close(spi_desc_t *desc)
 void
 spi_lock(spi_id_t dev_id)
 {
-	asm volatile ("cpsid i");
+	__asm__ volatile ("cpsid i");
 }
 
 int
-spi_trylock(spi_id_t dev_id);
+spi_trylock(spi_id_t dev_id)
 {
-	asm volatile ("cpsid i");
+	__asm__ volatile ("cpsid i");
 
 	return 1;
 }
 
 void
-spi_unlock(spi_id_t dev_id);
+spi_unlock(spi_id_t dev_id)
 {
-	asm volatile ("cpsie i");
+	__asm__ volatile ("cpsie i");
 }
 
 static
@@ -70,10 +74,10 @@ spi_ensure_settings(spi_desc_t *desc)
 	 * The bit frequency is PCLK / (prescale * [clk_rate+1])
 	 */
 	Chip_SSP_SetClockRate(desc->spi_dev, 0, 2);
-	dev->clock_khz = desc->max_clock_khz;
+	//dev->clock_khz = desc->max_clock_khz;
 
 	Chip_SSP_SetFormat(desc->spi_dev, SSP_BITS_8, SSP_FRAMEFORMAT_SPI, SSP_CLOCK_CPHA0_CPOL0);
-	dev->clock_pol = desc->clock_pol;
+	//dev->clock_pol = desc->clock_pol;
 
 	Chip_SSP_SetMaster(desc->spi_dev, 1);
 	Chip_SSP_Enable(desc->spi_dev);
@@ -133,7 +137,7 @@ spi_xfer_wr_byte(spi_desc_t *desc, uint8_t wdata)
 		--desc->n_outstanding;
 	}
 
-	Chip_SSP_SendFrame(desc->spi_dev, wr_data);
+	Chip_SSP_SendFrame(desc->spi_dev, wdata);
 	++desc->n_outstanding;
 }
 
@@ -141,7 +145,7 @@ void
 spi_xfer_wr(spi_desc_t *desc, uint8_t *wdata, int wlen)
 {
 	for (; wlen >= 0; wlen--) {
-		spi_xfer_wr_byte(*wdata++);
+		spi_xfer_wr_byte(desc, *wdata++);
 	}
 }
 
@@ -173,7 +177,7 @@ spi_xfer_rw(spi_desc_t *desc, uint8_t *wdata, int wlen, uint8_t *rdata, int rlen
 	uint8_t rd_byte;
 
 	/* Drain any outstanding request */
-	spi_xfer_wait();
+	spi_xfer_wait(desc);
 
 	for (i = 0; i < len; i++) {
 		/* Wait for TXFIFO to have space */

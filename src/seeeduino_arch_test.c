@@ -45,105 +45,27 @@ volatile bool ledOn = false;
 void
 spi1_setup(void)
 {
-        Chip_IOCON_PinMuxSet(LPC_IOCON, 1, 20, (IOCON_FUNC2 | IOCON_MODE_PULLDOWN));      /* SCK0 */
-        Chip_IOCON_PinMuxSet(LPC_IOCON, 1, 21, (IOCON_FUNC2 | IOCON_MODE_INACT));      /* MISO0 */
-        Chip_IOCON_PinMuxSet(LPC_IOCON, 1, 22, (IOCON_FUNC2 | IOCON_MODE_INACT));      /* MOSI0 */
+        Chip_IOCON_PinMuxSet(LPC_IOCON, 1, 20, (IOCON_FUNC2 | IOCON_MODE_PULLDOWN));  /* SCK1 */
+        Chip_IOCON_PinMuxSet(LPC_IOCON, 1, 21, (IOCON_FUNC2 | IOCON_MODE_INACT));     /* MISO1 */
+        Chip_IOCON_PinMuxSet(LPC_IOCON, 1, 22, (IOCON_FUNC2 | IOCON_MODE_INACT));     /* MOSI1 */
+	spi_init(SPI1);
 
-	Chip_SSP_Init(LPC_SSP1);
+        Chip_IOCON_PinMuxSet(LPC_IOCON, 1, 29, (IOCON_FUNC1 | IOCON_MODE_PULLDOWN));  /* SCK0 */
+        Chip_IOCON_PinMuxSet(LPC_IOCON, 0,  8, (IOCON_FUNC1 | IOCON_MODE_INACT));     /* MISO0 */
+        Chip_IOCON_PinMuxSet(LPC_IOCON, 0,  9, (IOCON_FUNC1 | IOCON_MODE_INACT));     /* MOSI0 */
+	spi_init(SPI0);
 
-	Chip_SSP_SetClockRate(LPC_SSP1, 0, 2);
+	//Chip_SSP_Init(LPC_SSP1);
 
-	Chip_SSP_SetFormat(LPC_SSP1, SSP_BITS_8, SSP_FRAMEFORMAT_SPI, SSP_CLOCK_CPHA0_CPOL0);
+	//Chip_SSP_SetClockRate(LPC_SSP1, 0, 2);
 
-	Chip_SSP_SetMaster(LPC_SSP1, 1);
+	//Chip_SSP_SetFormat(LPC_SSP1, SSP_BITS_8, SSP_FRAMEFORMAT_SPI, SSP_CLOCK_CPHA0_CPOL0);
 
-	Chip_SSP_Enable(LPC_SSP1);
+	//Chip_SSP_SetMaster(LPC_SSP1, 1);
+
+	//Chip_SSP_Enable(LPC_SSP1);
 }
 
-static int enqueued_data = 0;
-
-uint8_t
-spi1_rw8(uint8_t wr_data)
-{
-	Chip_SSP_DATA_SETUP_T xf_setup;
-	uint8_t rd_data;
-
-	xf_setup.tx_data = &wr_data;
-	xf_setup.rx_data = &rd_data;
-	xf_setup.length  = sizeof(wr_data);
-	xf_setup.tx_cnt  = xf_setup.rx_cnt = 0;
-
-	Chip_SSP_RWFrames_Blocking(LPC_SSP1, &xf_setup);
-	enqueued_data = 0;
-
-	return rd_data;
-}
-
-void
-spi1_write8(uint8_t wr_data)
-{
-	Chip_SSP_WriteFrames_Blocking(LPC_SSP1, &wr_data, 1);
-	return;
-}
-
-void
-spi1_write16(uint16_t wr_data)
-{
-	uint8_t buf[2];
-
-	buf[0] = wr_data >> 8;
-	buf[1] = wr_data & 0xff;
-
-	Chip_SSP_WriteFrames_Blocking(LPC_SSP1, &buf, 2);
-}
-
-void
-spi1_enqueue8(uint8_t wr_data)
-{
-	int data_seen = 0;
-
-	/* Clear all remaining frames in RX FIFO */
-	while (Chip_SSP_GetStatus(LPC_SSP1, SSP_STAT_RNE)) {
-		Chip_SSP_ReceiveFrame(LPC_SSP1);
-		--enqueued_data;
-	}
-
-	while (Chip_SSP_GetStatus(LPC_SSP1, SSP_STAT_TNF) != SET)
-		;
-
-	Chip_SSP_SendFrame(LPC_SSP1, wr_data);
-	++enqueued_data;
-}
-
-void
-spi1_enqueue16(uint16_t wr_data)
-{
-	uint8_t buf[2];
-
-	buf[0] = wr_data >> 8;
-	buf[1] = wr_data & 0xff;
-
-	spi1_enqueue8(buf[0]);
-	spi1_enqueue8(buf[1]);
-}
-
-void
-spi1_wait(void) {
-	while (Chip_SSP_GetStatus(LPC_SSP1, SSP_STAT_TFE) != SET)
-		;
-
-	while (enqueued_data > 0) {
-		if (Chip_SSP_GetStatus(LPC_SSP1, SSP_STAT_RNE) == SET) {
-			Chip_SSP_ReceiveFrame(LPC_SSP1);
-			--enqueued_data;
-		}
-	}
-
-	while (Chip_SSP_GetStatus(LPC_SSP1, SSP_STAT_RNE) == SET)
-		Chip_SSP_ReceiveFrame(LPC_SSP1);
-
-	enqueued_data = 0;
-}
 #endif
 
 /*****************************************************************************

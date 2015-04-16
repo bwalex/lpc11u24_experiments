@@ -73,7 +73,7 @@ spi_ensure_settings(spi_desc_t *desc)
 	 * Chip_SSP_SetClock_Rate(..., clk_rate, prescale)
 	 * The bit frequency is PCLK / (prescale * [clk_rate+1])
 	 */
-	Chip_SSP_SetClockRate(desc->spi_dev, 0, 2);
+	Chip_SSP_SetClockRate(desc->spi_dev, 0, 4);
 	//dev->clock_khz = desc->max_clock_khz;
 
 	Chip_SSP_SetFormat(desc->spi_dev, SSP_BITS_8, SSP_FRAMEFORMAT_SPI, SSP_CLOCK_CPHA0_CPOL0);
@@ -144,7 +144,7 @@ spi_xfer_wr_byte(spi_desc_t *desc, uint8_t wdata)
 void
 spi_xfer_wr(spi_desc_t *desc, uint8_t *wdata, int wlen)
 {
-	for (; wlen >= 0; wlen--) {
+	for (; wlen > 0; wlen--) {
 		spi_xfer_wr_byte(desc, *wdata++);
 	}
 }

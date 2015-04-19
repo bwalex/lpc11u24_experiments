@@ -4,8 +4,11 @@
 #include <stdint.h>
 
 extern uint32_t curtick;
+extern int critcount;
 
 #define TCB_FLAGS_TIMEDOUT	0x01
+
+typedef void (*task_fn_t)(void *);
 
 inline
 void

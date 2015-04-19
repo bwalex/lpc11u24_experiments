@@ -153,10 +153,10 @@ task_create(task_fn_t task_fn, uint32_t priv, int prio, size_t stacksz, const ch
 		return -1;
 	}
 
-	stack_sz += sizeof(struct md_ef);
+	stacksz += sizeof(struct md_ef);
 
 	/* Align SP to 16-byte boundary */
-	sp = (stack_base + stacksz + 15) & ~0xfUL;
+	sp = (uint8_t *)((uint32_t)(stack_base + stacksz + 15) & ~0xfUL);
 	tcb->tcb_sp_base = stack_base;
 
 	/* Set up initial exception frame */

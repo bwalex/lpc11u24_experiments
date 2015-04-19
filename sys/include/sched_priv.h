@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <queue.h>
+#include <sched.h>
 
 /* XXX: Consider using ASSYM flow - but seems overkill */
 /*ASSYM(TCB_MDDATA_OFF, offsetof(struct tcb, tcb_mddata));*/
@@ -72,10 +73,7 @@ struct tcb {
 	TAILQ_ENTRY(tcb)	tcb_wlink;
 };
 
-typedef void (*task_fn_t)(void *);
-
 extern struct tcb *curtcb;
-extern int critcount;
 
 void pendsv_handler(void);
 void systick_handler(void);

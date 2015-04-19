@@ -3,8 +3,9 @@
 #define CONTROL_PSP		0x2
 
 #define MD_EF_SIZE		32
-#define TCB_MDDATA_OFF		8
+
 #define TCB_SP_OFF		4
+#define TCB_MDDATA_OFF		8
 
 #define MDTCB_MDREGS_OFF	0
 #define	TCB_MDREGS_OFF		(TCB_MDDATA_OFF + MDTCB_MDREGS_OFF)

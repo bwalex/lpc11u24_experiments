@@ -631,6 +631,13 @@ void test2_task(uint32_t arg)
 	}
 }
 
+void test3_task(uint32_t arg)
+{
+	for (;;) {
+		testILI9341();
+	}
+}
+
 int main(void) {
 	char buf[128];
 	char txbuf[128];
@@ -690,6 +697,7 @@ int main(void) {
 
 	task_create(test_task, 0, -100, 256, "test");
 	task_create(test2_task, 0, -100, 256, "test2");
+	task_create(test3_task, 0, -100, 512, "test3");
 
 
 	/* Disable interrupts - sched_start() will re-enable them */

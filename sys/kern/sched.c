@@ -1,6 +1,9 @@
 #include <stdint.h>
 #include <sched_priv.h>
+#include <sched.h>
 #include <queue.h>
+#include <stdlib.h>
+#include <string.h>
 
 
 static TAILQ_HEAD(, tcb) runq =
@@ -100,7 +103,7 @@ sched_yield(void)
 	 */
 	crit_enter();
 	runq_insert(curtcb);
-	curtcb = NULL;
+	//curtcb = NULL;
 	_sched_yield();
 	crit_exit();
 }
@@ -110,7 +113,7 @@ sched_sleep(const char *wmesg, int ticks)
 {
 	crit_enter();
 	sleepq_insert(curtcb, ticks);
-	curtcb = NULL;
+	//curtcb = NULL;
 	_sched_yield();
 	crit_exit();
 }
@@ -137,7 +140,6 @@ idle_task(void *arg)
 int
 task_create(task_fn_t task_fn, uint32_t priv, int prio, size_t stacksz, const char *task_desc)
 {
-	int err;
 	struct tcb *tcb;
 	uint8_t *stack_base, *sp;
 
@@ -148,15 +150,16 @@ task_create(task_fn_t task_fn, uint32_t priv, int prio, size_t stacksz, const ch
 	tcb->tcb_prio = prio;
 	tcb->tcb_fn = task_fn;
 
-	if ((stack_base = malloc(stacksz + 16)) == NULL) {
+	stacksz += sizeof(struct md_ef);
+
+	if ((stack_base = malloc(stacksz + STACK_ALIGN_BYTES)) == NULL) {
 		free(tcb);
 		return -1;
 	}
 
-	stacksz += sizeof(struct md_ef);
-
 	/* Align SP to 16-byte boundary */
-	sp = (uint8_t *)((uint32_t)(stack_base + stacksz + 15) & ~0xfUL);
+	sp = (uint8_t *)((uint32_t)(stack_base + stacksz + STACK_ALIGN_BYTES-1) &
+	    STACK_ALIGN_MASK);
 	tcb->tcb_sp_base = stack_base;
 
 	/* Set up initial exception frame */
@@ -180,7 +183,7 @@ sched_init(void)
 	TAILQ_INIT(&sleepq);
 #endif
 
-	return task_create(idle_task, NULL, -100, 0, "idle");
+	return task_create(idle_task, (uint32_t)NULL, -100, 0, "idle");
 }
 
 void
@@ -189,6 +192,11 @@ sched_start(void)
 	struct tcb *tcb;
 
 	tcb = sched_select();
+	/*
+	 * Reset critcount, as init_task is going to enable interrupts no mattter
+	 * what.
+	 */
+	critcount = 0;
 	init_task(tcb);
 	/* NOTREACHED */
 }

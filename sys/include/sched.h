@@ -10,6 +10,7 @@ extern int critcount;
 
 typedef void (*task_fn_t)(void *);
 
+static
 inline
 void
 crit_enter(void)
@@ -18,6 +19,7 @@ crit_enter(void)
 		__asm__ __volatile__ ("cpsid i");
 }
 
+static
 inline
 void
 crit_exit(void)

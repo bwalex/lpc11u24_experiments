@@ -42,7 +42,7 @@ again:
 	}
 
 	TAILQ_INSERT_TAIL(&sem->sem_waitq, curtcb, tcb_wlink);
-	curtcb = NULL;
+	//curtcb = NULL;
 	_sched_yield();
 	crit_exit();
 

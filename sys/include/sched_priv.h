@@ -21,6 +21,9 @@
 #define SCB_ICSR_PENDSTSET	(1 << 26)
 #define SCB_ICSR_PENDSTCLR	(1 << 25)
 
+#define STACK_ALIGN_BYTES	8
+#define STACK_ALIGN_MASK	~0x7UL
+
 /*
  * Exception frame:
  *             <previous>  <- SP points here before interrupt
@@ -75,6 +78,9 @@ struct tcb {
 
 extern struct tcb *curtcb;
 
+#if defined (__cplusplus)
+extern "C" {
+#endif
 void pendsv_handler(void);
 void systick_handler(void);
 
@@ -87,5 +93,9 @@ void process_sleepq(void);
 void _sched_yield(void);
 struct tcb *sched_select(void);
 void idle_task(void *arg);
+
+#if defined (__cplusplus)
+}
+#endif
 
 #endif

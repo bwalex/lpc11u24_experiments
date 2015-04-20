@@ -14,8 +14,15 @@
 #define TCB_MDREGS_SZ		(TCB_MDREGS_LO_SZ + TCB_MDREGS_HI_SZ)
 #define	TCB_MDREGS_HI_OFF	(TCB_MDDATA_OFF + MDTCB_MDREGS_OFF + TCB_MDREGS_LO_SZ)
 
+.text
+.code 16
+.global init_stack
+.global init_task
+.global pendsv_handler
+
 /* void *init_stack(void *sp, void *pc, uint32_t r0); */
 /*                        r0        r1           r2   */
+.thumb_func
 init_stack:
 	/* Adjust stack pointer by exception frame size */
 	sub r0, #MD_EF_SIZE
@@ -39,10 +46,9 @@ init_stack:
 
 /* void init_task(struct tcb *tcb) __attribute__((noreturn)); */
 /*                            r0                              */
+/* Interrupts *MUST* be disabled before coming in here */
+.thumb_func
 init_task:
-	/* Disable interrupts so all of this can happen atomically */
-	cpsid i
-
 	/* Set up PSP as stack pointer, and switch to it */
 	ldr r1, [r0,#TCB_SP_OFF]
 	msr PSP, r1
@@ -58,6 +64,7 @@ init_task:
 
 
 /* void pendsv_handler(void); */
+.thumb_func
 pendsv_handler:
 	/* Find TCB (into t2) */
 	ldr r2, =curtcb

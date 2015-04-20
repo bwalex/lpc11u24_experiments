@@ -18,7 +18,7 @@
 
 //#include <cr_section_macros.h>
 
-#define TICKRATE1_HZ 1
+#define TICKRATE1_HZ 1000
 
 volatile bool ledOn = false;
 
@@ -36,6 +36,7 @@ volatile bool ledOn = false;
 #include <errno.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <sched.h>
 #include "spi.h"
 
 /*****************************************************************************
@@ -510,13 +511,6 @@ USB_INTERFACE_DESCRIPTOR *find_IntfDesc(const uint8_t *pDesc, uint32_t intfClass
 
 
 
-void SysTick_Handler(void)
-{
-	//ledOn = (bool) !ledOn;
-	//Chip_GPIO_SetPinState(LPC_GPIO, 1, 11, false);
-
-}
-
 void TIMER32_0_IRQHandler(void)
 {
 	if (Chip_TIMER_MatchPending(LPC_TIMER32_0, 1)) {
@@ -612,6 +606,31 @@ int readline(char *buf, int buf_sz)
 
 void testILI9341(void);
 
+void test_task(uint32_t arg)
+{
+	int led_state = 1;
+	int last_curtick = 0;
+	for (;;) {
+		Chip_GPIO_SetPinState(LPC_GPIO, 1, 8, led_state);
+		led_state = !led_state;
+		last_curtick = curtick;
+		sched_sleep("ttslp", 1500);
+	}
+}
+
+void test2_task(uint32_t arg)
+{
+	int led_state = 1;
+	int last_curtick = -1;
+	for (;;) {
+		if ((curtick != last_curtick) && (curtick - last_curtick) > 1000) {
+			Chip_GPIO_SetPinState(LPC_GPIO, 1, 9, led_state);
+			led_state = !led_state;
+			last_curtick = curtick;
+		}
+	}
+}
+
 int main(void) {
 	char buf[128];
 	char txbuf[128];
@@ -629,13 +648,12 @@ int main(void) {
     Board_LED_Set(0, true);
 #endif
 #endif
-
+	SystemCoreClockUpdate();
 	/* enable clocks and pinmux */
 	usb_pin_clk_init();
 
 	uint32_t timerFreq;
 
-	SysTick_Config(SystemCoreClock / TICKRATE1_HZ);
 	Chip_TIMER_Init(LPC_TIMER32_0);
 	timerFreq = Chip_Clock_GetSystemClockRate();
 
@@ -667,11 +685,25 @@ int main(void) {
 
 	Chip_GPIO_SetPinState(LPC_GPIO, 1, 8, 1);
 
+	//testILI9341();
+	sched_init();
+
+	task_create(test_task, 0, -100, 256, "test");
+	task_create(test2_task, 0, -100, 256, "test2");
+
+
+	/* Disable interrupts - sched_start() will re-enable them */
+	crit_enter();
+	SysTick_Config(SystemCoreClock / TICKRATE1_HZ);
+
+	*((uint32_t *)0xE000ED20) = (0xff << 24) | (0xff << 16);
+
 	//spi1_write8(0xAA);
 	//spi1_write8(0xBB);
 	//spi1_write8(0xCC);
 	//spi1_write8(0xDD);
-	testILI9341();
+
+	sched_start();
 
 	while (1) {
 		__WFI();

@@ -9,6 +9,9 @@ CHIPLIB=/home/alex/LPCXpresso/workspace/lpc_chip_11uxx_lib
 ADAFRUIT_GFX=/home/alex/LPCXpresso/workspace/wip/adafruit/Adafruit-GFX-Library
 ADAFRUIT_ILI9325=/home/alex/LPCXpresso/workspace/wip/adafruit/TFTLCD-Library
 ADAFRUIT_ILI9341=/home/alex/LPCXpresso/workspace/wip/adafruit/Adafruit_ILI9341
+OS_INC=sys/include
+OS_SRC=sys/kern
+OS_MACHDEP_SRC=sys/platform/m0
 
 CFLAGS=-std=c99
 CFLAGS+=-mcpu=cortex-m0 -mthumb -mfloat-abi=soft
@@ -18,12 +21,16 @@ CFLAGS+=-Iinc
 CFLAGS+=-I.
 CFLAGS+=-I$(CHIPLIB)/inc
 CFLAGS+=-D__USE_LPCOPEN -DNO_BOARD_LIB -DCORE_M0 -D__NEWLIB__
-CFLAGS+=-Os -flto -g3
+#CFLAGS+=-O0 -g3
+CFLAGS+=-O0 -flto -g3
 CFLAGS+=-ffunction-sections -fdata-sections
 CFLAGS+=-I$(ADAFRUIT_GFX)
 #CFLAGS+=-I$(ADAFRUIT_ILI9325)
 CFLAGS+=-I$(ADAFRUIT_ILI9341)
+CFLAGS+=-I$(OS_INC)
 CFLAGS+=-static
+ASFLAGS=-mcpu=cortex-m0 -mthumb -mfloat-abi=soft
+ASFLAGS+=-I$(OS_INC)
 
 CXXFLAGS=$(CFLAGS)
 CXXFLAGS+=-fno-rtti -fno-exceptions
@@ -44,6 +51,10 @@ OBJS+=$(CHIPLIB)/src/sysctl_11xx.o	\
       $(CHIPLIB)/src/clock_11xx.o 	\
       $(CHIPLIB)/src/chip_11xx.o	\
       $(CHIPLIB)/src/timer_11xx.o
+OBJS+=$(OS_MACHDEP_SRC)/machdep.o
+OBJS+=$(OS_SRC)/sched.o			\
+      $(OS_SRC)/sem.o			\
+      $(OS_SRC)/wqueue.o
 
 CXXOBJS=$(ADAFRUIT_GFX)/Adafruit_GFX.o
 #CXXOBJS+=$(ADAFRUIT_ILI9325)/Adafruit_TFTLCD.o

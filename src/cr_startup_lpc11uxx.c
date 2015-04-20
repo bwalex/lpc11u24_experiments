@@ -28,6 +28,7 @@
 // copyright, permission, and disclaimer notice must appear in all copies of
 // this code.
 //*****************************************************************************
+#include <sched_priv.h>
 
 #if defined (__cplusplus)
 #ifdef __REDLIB__
@@ -160,8 +161,8 @@ void (* const g_pfnVectors[])(void) = {
     SVC_Handler,                      // SVCall handler
     0,                                // Reserved
     0,                                // Reserved
-    PendSV_Handler,                   // The PendSV handler
-    SysTick_Handler,                  // The SysTick handler
+    pendsv_handler,                   // The PendSV handler
+    systick_handler,                  // The SysTick handler
 
     // LPC11U specific handlers
     FLEX_INT0_IRQHandler,             //  0 - GPIO pin interrupt 0
